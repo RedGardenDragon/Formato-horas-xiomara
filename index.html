@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calendario de Trabajo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🗓️ Calendario Laboral Mensual</h1>
+
+    <div class="valor-hora">
+      <label for="valorHora">💶 Valor por hora (€):</label>
+      <input type="number" id="valorHora" value="10" step="0.01" />
+    </div>
+
+    <div class="calendar" id="calendarGrid"></div>
+
+    <div class="totales">
+      <h2>Resumen del Mes</h2>
+      <p>🕒 Total de horas: <span id="totalHoras">0.00</span></p>
+      <p>💰 Total ganado: €<span id="totalPago">0.00</span></p>
+    </div>
+
+    <button onclick="calcularTotales()">Calcular Totales</button>
+  </div>
+
+  <script>
+    const diasDelMes = 30;
+
+    function crearTarjetas() {
+      const grid = document.getElementById("calendarGrid");
+      for (let dia = 1; dia <= diasDelMes; dia++) {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <h3>Día ${dia}</h3>
+          <label>Entrada (AM/PM)</label>
+          <input type="text" id="entrada-${dia}" placeholder="Ej: 9:00 AM" />
+          <label>Salida (AM/PM)</label>
+          <input type="text" id="salida-${dia}" placeholder="Ej: 5:00 PM" />
+          <div class="resultado">
+            <span>🕒 <span id="horas-${dia}">0</span> h</span>
+            <span>💵 €<span id="pago-${dia}">0.00</span></span>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+    }
+
+    function parseHora(horaStr) {
+      const match = horaStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+      if (!match) return null;
+      let [_, h, m, ampm] = match;
+      h = parseInt(h); m = parseInt(m);
+      if (h < 1 || h > 12 || m > 59) return null;
+      if (ampm.toUpperCase() === "PM" && h !== 12) h += 12;
+      if (ampm.toUpperCase() === "AM" && h === 12) h = 0;
+      return new Date(0, 0, 0, h, m);
+    }
+
+    function calcularTotales() {
+      const valorHora = parseFloat(document.getElementById("valorHora").value);
+      let totalMinutos = 0, totalPago = 0;
+
+      for (let dia = 1; dia <= diasDelMes; dia++) {
+        const entrada = document.getElementById(`entrada-${dia}`).value.trim();
+        const salida = document.getElementById(`salida-${dia}`).value.trim();
+        const t1 = parseHora(entrada);
+        const t2 = parseHora(salida);
+
+        const horasEl = document.getElementById(`horas-${dia}`);
+        const pagoEl = document.getElementById(`pago-${dia}`);
+
+        if (t1 && t2) {
+          let diff = (t2 - t1) / 60000;
+          if (diff < 0) diff += 24 * 60;
+          const horas = diff / 60;
+          const pago = horas * valorHora;
+
+          horasEl.textContent = horas.toFixed(2);
+          pagoEl.textContent = pago.toFixed(2);
+
+          totalMinutos += diff;
+          totalPago += pago;
+        } else {
+          horasEl.textContent = "-";
+          pagoEl.textContent = "-";
+        }
+      }
+
+      document.getElementById("totalHoras").textContent = (totalMinutos / 60).toFixed(2);
+      document.getElementById("totalPago").textContent = totalPago.toFixed(2);
+    }
+
+    crearTarjetas();
+  </script>
+</body>
+</html>
